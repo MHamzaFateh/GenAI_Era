@@ -4,6 +4,4 @@ speechrecognition
 datasets
 deep-translator
 gtts
-pyaudio
-pydub
 pygame
