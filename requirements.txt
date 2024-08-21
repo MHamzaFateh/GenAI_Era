@@ -1,6 +1,6 @@
 google-generativeai
 streamlit
-st-audiorec
+streamlit_audio_recorder
 SpeechRecognition
 gTTS
 pygame
