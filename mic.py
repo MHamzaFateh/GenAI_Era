@@ -7,7 +7,8 @@ import tempfile
 import speech_recognition as sr
 from datasets import load_dataset
 from deep_translator import GoogleTranslator
-import pygame
+from playsound import playsound
+# import pygame
 
 
 # Retrieve API key from environment variable
@@ -40,19 +41,27 @@ def translate_text(text, src_lang='en', dest_lang='ur'):
     return translator.translate(text)
 
 # Function to speak text
+# def speak_text(text, lang='ur'):
+#     tts = gTTS(text=text, lang=lang)
+#     audio_file = "response.mp3"
+#     tts.save(audio_file)
+
+#     pygame.mixer.init()
+#     pygame.mixer.music.load(audio_file)
+#     pygame.mixer.music.play()
+
+#     while pygame.mixer.music.get_busy():
+#         pygame.time.Clock().tick(10)
+
+#     pygame.mixer.quit()
+
+
 def speak_text(text, lang='ur'):
     tts = gTTS(text=text, lang=lang)
     audio_file = "response.mp3"
     tts.save(audio_file)
+    playsound(audio_file)
 
-    pygame.mixer.init()
-    pygame.mixer.music.load(audio_file)
-    pygame.mixer.music.play()
-
-    while pygame.mixer.music.get_busy():
-        pygame.time.Clock().tick(10)
-
-    pygame.mixer.quit()
 
 # Function to recognize speech from audio
 def speech_to_text(audio_file):
