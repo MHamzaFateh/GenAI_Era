@@ -6,3 +6,4 @@ gTTS
 pygame
 datasets
 deep-translator==1.10.0
+playsound
