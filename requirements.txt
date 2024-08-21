@@ -1,3 +1,9 @@
 streamlit
-bokeh
-streamlit-bokeh-events
+google-generativeai
+speechrecognition
+datasets
+deep-translator
+gtts
+pygame
+pydub
+st-audiorec
