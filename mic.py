@@ -8,9 +8,9 @@ from gtts import gTTS
 import tempfile
 import pygame
 
-# Configure the Gemini API key
-os.environ["GEMINI_API_KEY"] = "AIzaSyCEFs57Nts11jLv1cIpA4qgHn1ZNJPUX7w"
 api_key = os.getenv("GEMINI_API_KEY")
+if api_key is None:
+    raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
 genai.configure(api_key=api_key)
 
 # Load data from a file
