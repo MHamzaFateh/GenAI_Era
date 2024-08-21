@@ -4,6 +4,5 @@ audio-recorder-streamlit
 SpeechRecognition
 gTTS
 pygame
-tempfile
 datasets
 deep-translator==1.10.0
