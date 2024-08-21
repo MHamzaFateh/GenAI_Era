@@ -7,9 +7,8 @@ import tempfile
 import speech_recognition as sr
 from datasets import load_dataset
 from deep_translator import GoogleTranslator
-import pygame
 
-# Configure the Gemini API key
+# Retrieve API key from environment variable
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key is None:
     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
@@ -18,7 +17,7 @@ genai.configure(api_key=api_key)
 # Initialize translator
 translator = GoogleTranslator(source='en', target='ur')
 
-# Load data from a file
+# Function to load dataset
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
     dataset = load_dataset(dataset_name)
     documents = [f"User: {item['Context']}\nPsychologist: {item['Response']}" for item in dataset['train']]
@@ -44,6 +43,7 @@ def speak_text(text, lang='ur'):
     audio_file = "response.mp3"
     tts.save(audio_file)
 
+    import pygame
     pygame.mixer.init()
     pygame.mixer.music.load(audio_file)
     pygame.mixer.music.play()
@@ -53,11 +53,23 @@ def speak_text(text, lang='ur'):
 
     pygame.mixer.quit()
 
-# Streamlit app
+# Function to recognize speech from audio
+def speech_to_text(audio_file):
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(audio_file) as source:
+        audio_data = recognizer.record(source)
+        try:
+            return recognizer.recognize_google(audio_data, language='en')  # You can change language code if needed
+        except sr.UnknownValueError:
+            return "Sorry, I could not understand the audio."
+        except sr.RequestError:
+            return "Sorry, there was a problem with the speech recognition service."
+
+# Initialize Streamlit app
 st.title("AI Virtual Psychiatrist")
 st.write("Speak into the microphone and get responses from the AI. To end the conversation, say 'Q'.")
 
-# Initialize chat history in Streamlit session state
+# Initialize chat history
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
@@ -70,7 +82,7 @@ if audio_bytes:
         try:
             user_query = speech_to_text(audio_file.name)
             st.write(f"User: {user_query}")
-            if user_query.lower() in ['quit', 'q', 'exit']:
+            if user_query.strip().lower() == 'q':
                 st.write("Exiting...")
                 st.stop()
 
@@ -85,10 +97,6 @@ if audio_bytes:
             # Update chat history
             st.session_state.chat_history.append((user_query, result_ur))
 
-        except sr.UnknownValueError:
-            st.write("Sorry, I could not understand the audio.")
-        except sr.RequestError:
-            st.write("Sorry, there was a problem with the speech recognition service.")
         except Exception as e:
             st.write(f"An error occurred: {str(e)}")
 
