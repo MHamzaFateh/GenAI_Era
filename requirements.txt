@@ -1,5 +1,6 @@
 google-generativeai
 speechrecognition
+datasets
 deep-translator
 gtts
 pygame
