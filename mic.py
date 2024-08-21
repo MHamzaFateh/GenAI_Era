@@ -193,7 +193,3 @@ if audio_bytes:
         except sr.RequestError as e:
             st.write(f"Could not request results from Google Speech Recognition service; {e}")
 
-# Run the app with Streamlit
-if __name__ == '__main__':
-    st.run()
-
