@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import os
 import sys
 import google.generativeai as genai
@@ -14,15 +8,11 @@ from gtts import gTTS
 import playsound
 import streamlit as st
 
-# Configure API key
-os.environ["GEMINI_API_KEY"] = "AIzaSyCEFs57Nts11jLv1cIpA4qgHn1ZNJPUX7w"
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
-# Initialize translator
 translator = GoogleTranslator(source='en', target='ur')
 
-# Function to load dataset
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
     dataset = load_dataset(dataset_name)
     documents = []
@@ -32,7 +22,6 @@ def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
         documents.append(f"User: {context}\nPsychologist: {response}")
     return documents
 
-# Function for conversational retrieval
 def conversational_retrieval(query, chat_history):
     documents = load_data()[:5]
     combined_documents = "\n".join(documents)
@@ -42,12 +31,10 @@ def conversational_retrieval(query, chat_history):
     response = model.generate_content(full_context)
     return response.text
 
-# Function to translate text
 def translate_text(text, src_lang='en', dest_lang='ur'):
     translation = translator.translate(text)
     return translation
 
-# Function to speak text
 def speak_text(text, lang='ur'):
     tts = gTTS(text=text, lang=lang)
     audio_file = os.path.join(os.getcwd(), "response.mp3")
@@ -55,14 +42,11 @@ def speak_text(text, lang='ur'):
     playsound.playsound(audio_file)
     os.remove(audio_file)
 
-# Initialize Streamlit app
 st.title("AI Virtual Psychiatrist")
 st.write("Speak into the microphone and get responses from the AI. To end the conversation, say 'Q'.")
 
-# Initialize chat history
 chat_history = []
 
-# Microphone input section
 if st.button("Start Listening"):
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
@@ -77,15 +61,12 @@ if st.button("Start Listening"):
                 st.write("گفتگو ختم کی جا رہی ہے۔")
                 sys.exit()
 
-            # Get AI response
             result_en = conversational_retrieval(query, chat_history)
             result_ur = translate_text(result_en)
             st.write(f"AI: {result_ur}")
 
-            # Speak AI response
             speak_text(result_ur, lang='ur')
 
-            # Update chat history
             chat_history.append((query, result_ur))
 
         except sr.UnknownValueError:
@@ -95,7 +76,6 @@ if st.button("Start Listening"):
         except sr.WaitTimeoutError:
             st.write("وقت کے دوران کوئی آواز نہیں سنی گئی۔")
 
-# Chat history display
 if chat_history:
     st.subheader("Chat History")
     for i, (user_query, ai_response) in enumerate(chat_history):
