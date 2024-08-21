@@ -7,6 +7,8 @@ import tempfile
 import speech_recognition as sr
 from datasets import load_dataset
 from deep_translator import GoogleTranslator
+import pygame
+
 
 # Retrieve API key from environment variable
 api_key = os.getenv("GEMINI_API_KEY")
@@ -43,7 +45,6 @@ def speak_text(text, lang='ur'):
     audio_file = "response.mp3"
     tts.save(audio_file)
 
-    import pygame
     pygame.mixer.init()
     pygame.mixer.music.load(audio_file)
     pygame.mixer.music.play()
