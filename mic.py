@@ -1,16 +1,22 @@
 import os
 import google.generativeai as genai
-import sys
 import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 from gtts import gTTS
 import tempfile
 import speech_recognition as sr
+from datasets import load_dataset
+from deep_translator import GoogleTranslator
+import pygame
 
+# Configure the Gemini API key
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key is None:
     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
 genai.configure(api_key=api_key)
+
+# Initialize translator
+translator = GoogleTranslator(source='en', target='ur')
 
 # Load data from a file
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
@@ -18,33 +24,42 @@ def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
     documents = [f"User: {item['Context']}\nPsychologist: {item['Response']}" for item in dataset['train']]
     return documents
 
-# This function simulates the conversational retrieval process
+# Function for conversational retrieval
 def conversational_retrieval(query, chat_history):
     documents = load_data()[:5]
     combined_documents = "\n".join(documents)
     conversation_context = "\n".join([f"User: {q}\nAI: {a}" for q, a in chat_history])
-    full_context = f"{conversation_context}\nDocuments: {combined_documents[:12000]}\nUser Query: {query}"
+    full_context = f"{conversation_context}\nDocuments: {combined_documents[:9000]}\nUser Query: {query}"
     model = genai.GenerativeModel('gemini-1.0-pro-latest')
     response = model.generate_content(full_context)
     return response.text
 
-# Function to convert text to speech
-def text_to_speech(text):
-    tts = gTTS(text, lang='en')
-    with tempfile.NamedTemporaryFile(delete=True) as tmp_file:
-        tts.save(tmp_file.name)
-        return tmp_file.name
+# Function to translate text
+def translate_text(text, src_lang='en', dest_lang='ur'):
+    return translator.translate(text)
 
-# Function to recognize speech from audio
-def speech_to_text(audio_bytes):
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_bytes) as source:
-        audio_data = recognizer.record(source)
-        return recognizer.recognize_google(audio_data)
+# Function to speak text
+def speak_text(text, lang='ur'):
+    tts = gTTS(text=text, lang=lang)
+    audio_file = "response.mp3"
+    tts.save(audio_file)
+
+    pygame.mixer.init()
+    pygame.mixer.music.load(audio_file)
+    pygame.mixer.music.play()
+
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
+
+    pygame.mixer.quit()
 
 # Streamlit app
-st.title("AI Virtual Therapist")
-st.write("Talk to your AI virtual therapist!")
+st.title("AI Virtual Psychiatrist")
+st.write("Speak into the microphone and get responses from the AI. To end the conversation, say 'Q'.")
+
+# Initialize chat history in Streamlit session state
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
 
 # Record audio input
 audio_bytes = audio_recorder()
@@ -59,18 +74,27 @@ if audio_bytes:
                 st.write("Exiting...")
                 st.stop()
 
-            # Get the AI's response
-            result = conversational_retrieval(user_query, chat_history)
-            st.write(f"AI: {result}")
+            # Get AI response
+            result_en = conversational_retrieval(user_query, st.session_state.chat_history)
+            result_ur = translate_text(result_en)
+            st.write(f"AI: {result_ur}")
 
-            # Add to chat history
-            chat_history.append((user_query, result))
+            # Speak AI response
+            speak_text(result_ur, lang='ur')
 
-            # Convert response to speech
-            audio_response = text_to_speech(result)
-            st.audio(audio_response, format="audio/wav")
+            # Update chat history
+            st.session_state.chat_history.append((user_query, result_ur))
 
         except sr.UnknownValueError:
             st.write("Sorry, I could not understand the audio.")
         except sr.RequestError:
             st.write("Sorry, there was a problem with the speech recognition service.")
+        except Exception as e:
+            st.write(f"An error occurred: {str(e)}")
+
+# Display chat history
+if st.session_state.chat_history:
+    st.subheader("Chat History")
+    for i, (user_query, ai_response) in enumerate(st.session_state.chat_history):
+        st.write(f"Q{i+1}: {user_query}")
+        st.write(f"A{i+1}: {ai_response}")
