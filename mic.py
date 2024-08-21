@@ -2,15 +2,14 @@ import os
 import google.generativeai as genai
 import sys
 import streamlit as st
-from st_audiorec import st_audiorec
-import speech_recognition as sr
+from audio_recorder_streamlit import audio_recorder
 from gtts import gTTS
 import tempfile
-import pygame
+import speech_recognition as sr
 
+# Configure the Gemini API key
+os.environ["GEMINI_API_KEY"] = "AIzaSyCEFs57Nts11jLv1cIpA4qgHn1ZNJPUX7w"
 api_key = os.getenv("GEMINI_API_KEY")
-if api_key is None:
-    raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
 genai.configure(api_key=api_key)
 
 # Load data from a file
@@ -33,63 +32,49 @@ def conversational_retrieval(query, chat_history):
     response = model.generate_content(full_context)
     return response.text
 
-# Initialize chat history
-chat_history = []
+# Function to convert text to speech
+def text_to_speech(text):
+    tts = gTTS(text, lang='en')
+    with tempfile.NamedTemporaryFile(delete=True) as tmp_file:
+        tts.save(tmp_file.name)
+        return tmp_file.name
+
+# Function to recognize speech from audio
+def speech_to_text(audio_bytes):
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(audio_bytes) as source:
+        audio_data = recognizer.record(source)
+        return recognizer.recognize_google(audio_data)
 
 # Streamlit app
-st.title("AI Virtual Therapist with Voice Interaction")
+st.title("AI Virtual Therapist")
+st.write("Talk to your AI virtual therapist!")
 
-# Record voice input
-st.write("Please speak to the AI:")
-wav_audio_data = st_audiorec()
+# Record audio input
+audio_bytes = audio_recorder()
+if audio_bytes:
+    with tempfile.NamedTemporaryFile(delete=True) as audio_file:
+        audio_file.write(audio_bytes)
+        audio_file.flush()
+        try:
+            user_query = speech_to_text(audio_file.name)
+            st.write(f"User: {user_query}")
+            if user_query.lower() in ['quit', 'q', 'exit']:
+                st.write("Exiting...")
+                st.stop()
 
-if wav_audio_data is not None:
-    # Save the audio data to a temporary file
-    with tempfile.NamedTemporaryFile(delete=True) as temp_wav_file:
-        temp_wav_file.write(wav_audio_data)
-        temp_wav_file.flush()
+            # Get the AI's response
+            result = conversational_retrieval(user_query, chat_history)
+            st.write(f"AI: {result}")
 
-        # Recognize speech using Google's speech recognition
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(temp_wav_file.name) as source:
-            audio_data = recognizer.record(source)
-            try:
-                query = recognizer.recognize_google(audio_data, language="en-US")
-                st.write(f"You said: {query}")
+            # Add to chat history
+            chat_history.append((user_query, result))
 
-                # Get the AI's response
-                result = conversational_retrieval(query, chat_history)
-                st.write(f"AI: {result}")
+            # Convert response to speech
+            audio_response = text_to_speech(result)
+            st.audio(audio_response, format="audio/wav")
 
-                # Text-to-Speech (TTS)
-                tts = gTTS(text=result, lang='en')
-                with tempfile.NamedTemporaryFile(delete=True) as temp_mp3_file:
-                    tts.save(temp_mp3_file.name)
-                    pygame.mixer.init()
-                    pygame.mixer.music.load(temp_mp3_file.name)
-                    pygame.mixer.music.play()
-
-                # Add the conversation to the history
-                chat_history.append((query, result))
-
-            except sr.UnknownValueError:
-                st.write("Google Speech Recognition could not understand the audio.")
-            except sr.RequestError as e:
-                st.write(f"Could not request results from Google Speech Recognition service; {e}")
-
-# Prompt for text input as well
-text_query = st.text_input("Or type your question here:")
-
-if st.button("Submit Query"):
-    result = conversational_retrieval(text_query, chat_history)
-    st.write(f"AI: {result}")
-
-    # TTS for text input
-    tts = gTTS(text=result, lang='en')
-    with tempfile.NamedTemporaryFile(delete=True) as temp_mp3_file:
-        tts.save(temp_mp3_file.name)
-        pygame.mixer.init()
-        pygame.mixer.music.load(temp_mp3_file.name)
-        pygame.mixer.music.play()
-
-    chat_history.append((text_query, result))
+        except sr.UnknownValueError:
+            st.write("Sorry, I could not understand the audio.")
+        except sr.RequestError:
+            st.write("Sorry, there was a problem with the speech recognition service.")
