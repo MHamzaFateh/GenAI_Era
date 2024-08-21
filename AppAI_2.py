@@ -5,12 +5,15 @@ import speech_recognition as sr
 from datasets import load_dataset
 from deep_translator import GoogleTranslator
 from gtts import gTTS
-import playsound
+from pydub import AudioSegment
+from pydub.playback import play
 import streamlit as st
 
+# Get API key from environment variable
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
+# Translator setup
 translator = GoogleTranslator(source='en', target='ur')
 
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
@@ -39,7 +42,9 @@ def speak_text(text, lang='ur'):
     tts = gTTS(text=text, lang=lang)
     audio_file = os.path.join(os.getcwd(), "response.mp3")
     tts.save(audio_file)
-    playsound.playsound(audio_file)
+    # Load and play audio using pydub
+    sound = AudioSegment.from_file(audio_file)
+    play(sound)
     os.remove(audio_file)
 
 st.title("AI Virtual Psychiatrist")
@@ -81,4 +86,3 @@ if chat_history:
     for i, (user_query, ai_response) in enumerate(chat_history):
         st.write(f"Q{i+1}: {user_query}")
         st.write(f"A{i+1}: {ai_response}")
-
