@@ -8,3 +8,4 @@ streamlit
 sounddevice
 numpy
 pydub
+streamlit-mic-recorder
