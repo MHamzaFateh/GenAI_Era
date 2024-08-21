@@ -4,4 +4,4 @@ speechrecognition
 datasets
 deep-translator
 gtts
-playsound
+pydub
