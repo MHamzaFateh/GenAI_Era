@@ -1,9 +1,6 @@
-streamlit
 google-generativeai
-speechrecognition
-datasets
-deep-translator
-gtts
-pygame
-pydub
+streamlit
 st-audiorec
+SpeechRecognition
+gTTS
+pygame
