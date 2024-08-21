@@ -5,4 +5,5 @@ datasets
 deep-translator
 gtts
 pyaudio
+portaudio
 pydub
