@@ -39,7 +39,6 @@ def conversational_retrieval(query, chat_history):
 def translate_text(text, src_lang='en', dest_lang='ur'):
     return translator.translate(text)
 
-Function to speak text
 def speak_text(text, lang='ur'):
     tts = gTTS(text=text, lang=lang)
     audio_file = "response.mp3"
