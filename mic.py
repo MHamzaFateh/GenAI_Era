@@ -13,21 +13,17 @@ if api_key is None:
 genai.configure(api_key=api_key)
 
 # Load data from a file
-def load_data(filepath="data.txt"):
-    documents = []
-    if os.path.isfile(filepath):
-        with open(filepath, 'r') as file:
-            documents.append(file.read())
-    else:
-        raise FileNotFoundError(f"The file {filepath} does not exist.")
+def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
+    dataset = load_dataset(dataset_name)
+    documents = [f"User: {item['Context']}\nPsychologist: {item['Response']}" for item in dataset['train']]
     return documents
 
 # This function simulates the conversational retrieval process
 def conversational_retrieval(query, chat_history):
-    documents = load_data()
-    combined_documents = " ".join(documents)
+    documents = load_data()[:5]
+    combined_documents = "\n".join(documents)
     conversation_context = "\n".join([f"User: {q}\nAI: {a}" for q, a in chat_history])
-    full_context = f"{conversation_context}\nDocuments: {combined_documents}\nUser Query: {query}"
+    full_context = f"{conversation_context}\nDocuments: {combined_documents[:12000]}\nUser Query: {query}"
     model = genai.GenerativeModel('gemini-1.0-pro-latest')
     response = model.generate_content(full_context)
     return response.text
