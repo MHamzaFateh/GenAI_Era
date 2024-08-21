@@ -1,12 +1,3 @@
-google-generativeai
-speechrecognition
-datasets
-deep-translator
-gtts
-pygame
-wave
 streamlit
-sounddevice
-numpy
-pydub
-streamlit-mic-recorder
+bokeh
+streamlit-bokeh-events
