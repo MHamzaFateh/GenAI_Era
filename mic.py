@@ -7,7 +7,6 @@ from gtts import gTTS
 import tempfile
 import speech_recognition as sr
 
-# Configure the Gemini API key
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key is None:
     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
