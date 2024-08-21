@@ -4,6 +4,7 @@ datasets
 deep-translator
 gtts
 pygame
+wave
 streamlit
 sounddevice
 numpy
