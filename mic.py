@@ -193,6 +193,102 @@
 #         except sr.RequestError as e:
 #             st.write(f"Could not request results from Google Speech Recognition service; {e}")
 
+# # Workiing well
+# import os
+# import google.generativeai as genai
+# import sys
+# from datasets import load_dataset
+# import streamlit as st
+# from audio_recorder_streamlit import audio_recorder
+# import speech_recognition as sr
+# from gtts import gTTS
+# import tempfile
+
+# # Configure the Gemini API key
+# api_key = os.getenv("GEMINI_API_KEY")
+# if api_key is None:
+#     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
+# genai.configure(api_key=api_key)
+
+# # Load the dataset from Hugging Face
+# def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
+#     dataset = load_dataset(dataset_name)
+#     # Extracting context and response from the dataset
+#     documents = []
+#     for item in dataset['train']:
+#         context = item['Context']  # User's question
+#         response = item['Response']  # Psychologist's answer
+#         documents.append(f"User: {context}\nPsychologist: {response}")
+#     return documents
+
+# # Define conversational retrieval function
+# def conversational_retrieval(query, chat_history):
+#     documents = load_data()[:5]  # Load a small subset of the dataset
+#     combined_documents = "\n".join(documents)
+#     conversation_context = "\n".join([f"User: {q}\nAI: {a}" for q, a in chat_history])
+#     full_context = f"{conversation_context}\nDocuments: {combined_documents[:1000]}\nUser Query: {query}"
+#     model = genai.GenerativeModel('gemini-1.0-pro-latest')
+#     response = model.generate_content(full_context)
+#     return response.text
+
+# # Initialize chat history
+# if 'chat_history' not in st.session_state:
+#     st.session_state.chat_history = []
+
+# # Streamlit app interface
+# st.title("AI Virtual Psychiatrist")
+
+# # Audio recording section
+# st.write("Record your query:")
+# audio_bytes = audio_recorder()
+
+# # # Display chat history
+# # if st.session_state.chat_history:
+# #     st.write("### Chat History")
+# #     for query, response in st.session_state.chat_history:
+# #         st.write(f"**You:** {query}")
+# #         st.write(f"**AI:** {response}")
+# #         st.write("---")
+
+# # Chat history display
+# if st.session_state.chat_history:
+#     st.subheader("Chat History")
+#     for i, (query, response) in enumerate(st.session_state.chat_history):
+#         st.write(f"Q{i+1}: {query}")
+#         st.write(f"A{i+1}: {response}")
+
+
+# if audio_bytes:
+#     # Save the audio bytes to a temporary file
+#     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_file:
+#         temp_audio_file.write(audio_bytes)
+#         audio_file_path = temp_audio_file.name
+    
+#     # Convert audio to text
+#     recognizer = sr.Recognizer()
+#     with sr.AudioFile(audio_file_path) as source:
+#         audio = recognizer.record(source)
+#         try:
+#             query = recognizer.recognize_google(audio)
+#             st.write(f"Your query: {query}")
+            
+#             # Get the AI's response based on the query and the conversation history
+#             result = conversational_retrieval(query, st.session_state.chat_history)
+#             st.write("AI:", result)
+
+#             # Add the current query and AI's response to the session history
+#             st.session_state.chat_history.append((query, result))
+            
+#             # Convert AI's response to speech
+#             tts = gTTS(text=result, lang='ur')  # Assuming response in Urdu
+#             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_output:
+#                 tts.save(temp_audio_output.name)
+#                 st.audio(temp_audio_output.name, format='audio/mp3')
+        
+#         except sr.UnknownValueError:
+#             st.write("Sorry, I could not understand the audio.")
+#         except sr.RequestError as e:
+#             st.write(f"Could not request results from Google Speech Recognition service; {e}")
 
 import os
 import google.generativeai as genai
@@ -201,7 +297,7 @@ from datasets import load_dataset
 import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
-from gtts import gTTS
+from TTS.api import TTS
 import tempfile
 
 # Configure the Gemini API key
@@ -231,6 +327,19 @@ def conversational_retrieval(query, chat_history):
     response = model.generate_content(full_context)
     return response.text
 
+# Function to convert text to speech using Mozilla TTS
+def text_to_speech(text):
+    # Initialize the TTS engine
+    tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True, gpu=False)
+    
+    # Synthesize the speech
+    wav = tts.tts(text)
+    
+    # Save the audio to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_output:
+        tts.save_wav(wav, temp_audio_output.name)
+        return temp_audio_output.name
+
 # Initialize chat history
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
@@ -238,25 +347,16 @@ if 'chat_history' not in st.session_state:
 # Streamlit app interface
 st.title("AI Virtual Psychiatrist")
 
+
 # Audio recording section
 st.write("Record your query:")
 audio_bytes = audio_recorder()
 
-# # Display chat history
-# if st.session_state.chat_history:
-#     st.write("### Chat History")
-#     for query, response in st.session_state.chat_history:
-#         st.write(f"**You:** {query}")
-#         st.write(f"**AI:** {response}")
-#         st.write("---")
-
-# Chat history display
 if st.session_state.chat_history:
     st.subheader("Chat History")
     for i, (query, response) in enumerate(st.session_state.chat_history):
         st.write(f"Q{i+1}: {query}")
         st.write(f"A{i+1}: {response}")
-
 
 if audio_bytes:
     # Save the audio bytes to a temporary file
@@ -279,16 +379,14 @@ if audio_bytes:
             # Add the current query and AI's response to the session history
             st.session_state.chat_history.append((query, result))
             
-            # Convert AI's response to speech
-            tts = gTTS(text=result, lang='ur')  # Assuming response in Urdu
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_output:
-                tts.save(temp_audio_output.name)
-                st.audio(temp_audio_output.name, format='audio/mp3')
+            # Convert AI's response to speech using Mozilla TTS
+            audio_file_path = text_to_speech(result)
+            
+            # Play the generated audio
+            st.audio(audio_file_path, format='audio/wav')
         
         except sr.UnknownValueError:
             st.write("Sorry, I could not understand the audio.")
         except sr.RequestError as e:
             st.write(f"Could not request results from Google Speech Recognition service; {e}")
-
-
 
