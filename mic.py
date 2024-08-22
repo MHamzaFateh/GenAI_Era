@@ -328,19 +328,14 @@ def conversational_retrieval(query, chat_history):
     return response.text
 
 # Function to convert text to speech using pyttsx3
-def text_to_speech(text):
+def text_to_speech(text, lang='en'):
     try:
-        engine = pyttsx3.init()
-        voices = engine.getProperty('voices')
-        # Set to a female voice (choose an appropriate index based on the available voices)
-        engine.setProperty('voice', voices[1].id)  # You might need to adjust this index
+        tts = gTTS(text=text, lang=lang)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_output:
-            temp_audio_output_path = temp_audio_output.name
-        engine.save_to_file(text, temp_audio_output_path)
-        engine.runAndWait()
-        return temp_audio_output_path
+            tts.save(temp_audio_output.name)
+            return temp_audio_output.name
     except Exception as e:
-        st.error(f"Error initializing text-to-speech engine: {e}")
+        st.error(f"Error generating speech: {e}")
         return None
 
     
