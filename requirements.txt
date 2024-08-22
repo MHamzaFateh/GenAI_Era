@@ -4,3 +4,4 @@ datasets
 audio-recorder-streamlit
 SpeechRecognition
 gtts
+TTS
