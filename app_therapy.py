@@ -10,7 +10,6 @@ from gtts import gTTS
 import pyttsx3
 import tempfile
 
-# Configure the Gemini API key
 api_key = os.getenv("GEMINI_API_KEY")
 if api_key is None:
     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
@@ -20,17 +19,15 @@ translator = GoogleTranslator(source='en', target='ur')
 
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
     dataset = load_dataset(dataset_name)
-    # Extracting context and response from the dataset
     documents = []
     for item in dataset['train']:
-        context = item['Context']  # User's question
-        response = item['Response']  # Psychologist's answer
+        context = item['Context']  
+        response = item['Response']  
         documents.append(f"User: {context}\nPsychologist: {response}")
     return documents
 
-# Define conversational retrieval function
 def conversational_retrieval(query, chat_history):
-    documents = load_data()[:5]  # Load a small subset of the dataset
+    documents = load_data()[:5]  
     combined_documents = "\n".join(documents)
     conversation_context = "\n".join([f"User: {q}\nAI: {a}" for q, a in chat_history])
     full_context = f"{conversation_context}\nDocuments: {combined_documents[:12000]}\nUser Query: {query}"
@@ -41,7 +38,6 @@ def conversational_retrieval(query, chat_history):
 def translate_text(text, src_lang='en', dest_lang='ur'):
     return translator.translate(text)
 
-# Function to convert text to speech using pyttsx3
 def text_to_speech(text, lang='ur'):
     try:
         tts = gTTS(text=text, lang=lang)
@@ -53,20 +49,15 @@ def text_to_speech(text, lang='ur'):
         return None
 
     
-
-# Initialize chat history
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# Streamlit app interface
 st.title("AI Virtual Psychiatrist")
 st.write("Speak into the microphone and get responses from the AI Psychiatrist.")
 
-# Audio recording section
 st.write("Record your query:")
 audio_bytes = audio_recorder()
 
-# Display chat history
 if st.session_state.chat_history:
     st.subheader("Chat History")
     for i, (query, response) in enumerate(st.session_state.chat_history):
@@ -74,12 +65,10 @@ if st.session_state.chat_history:
         st.write(f"A{i+1}: {response}")
 
 if audio_bytes:
-    # Save the audio bytes to a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_file:
         temp_audio_file.write(audio_bytes)
         audio_file_path = temp_audio_file.name
     
-    # Convert audio to text
     recognizer = sr.Recognizer()
     with sr.AudioFile(audio_file_path) as source:
         audio = recognizer.record(source)
@@ -88,19 +77,15 @@ if audio_bytes:
             # st.write(f"Your query: {query}")
             st.write(f"آپ نے کہا: {query}")
             
-            # Get the AI's response based on the query and the conversation history
             result = conversational_retrieval(query, st.session_state.chat_history)
             # result_en = conversational_retrieval(query, st.session_state.chat_history)
             result_ur = translate_text(result)
             st.write("Dr. jennifer:", result_ur)
 
-            # Add the current query and AI's response to the session history
             st.session_state.chat_history.append((query, result_ur))
             
-            # Convert AI's response to speech using pyttsx3
             audio_file_path = text_to_speech(result_ur)
             
-            # Play the generated audio
             st.audio(audio_file_path, format='audio/mp3')
         
         # except sr.UnknownValueError:
