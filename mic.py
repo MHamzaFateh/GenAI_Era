@@ -307,7 +307,6 @@ if api_key is None:
     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
 genai.configure(api_key=api_key)
 
-Load the dataset from Hugging Face
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
     dataset = load_dataset(dataset_name)
     # Extracting context and response from the dataset
