@@ -297,6 +297,7 @@ from datasets import load_dataset
 import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
+from gtts import gTTS
 import pyttsx3
 import tempfile
 
