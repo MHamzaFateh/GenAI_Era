@@ -308,14 +308,19 @@ if api_key is None:
 genai.configure(api_key=api_key)
 
 # Load the dataset from Hugging Face
+# def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
+#     dataset = load_dataset(dataset_name)
+#     # Extracting context and response from the dataset
+#     documents = []
+#     for item in dataset['train']:
+#         context = item['Context']  # User's question
+#         response = item['Response']  # Psychologist's answer
+#         documents.append(f"User: {context}\nPsychologist: {response}")
+#     return documents
+
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
     dataset = load_dataset(dataset_name)
-    # Extracting context and response from the dataset
-    documents = []
-    for item in dataset['train']:
-        context = item['Context']  # User's question
-        response = item['Response']  # Psychologist's answer
-        documents.append(f"User: {context}\nPsychologist: {response}")
+    documents = [f"User: {item['Context']}\nPsychologist: {item['Response']}" for item in dataset['train']]
     return documents
 
 # Define conversational retrieval function
