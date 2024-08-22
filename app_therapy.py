@@ -30,7 +30,7 @@ def conversational_retrieval(query, chat_history):
     documents = load_data()[:5]  
     combined_documents = "\n".join(documents)
     conversation_context = "\n".join([f"User: {q}\nAI: {a}" for q, a in chat_history])
-    full_context = f"{conversation_context}\nDocuments: {combined_documents[:12000]}\nUser Query: {query}"
+    full_context = f"{conversation_context}\nDocuments: {combined_documents[:15000]}\nUser Query: {query}"
     model = genai.GenerativeModel('gemini-1.5-pro-latest')
     response = model.generate_content(full_context)
     return response.text
