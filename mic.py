@@ -329,13 +329,21 @@ def conversational_retrieval(query, chat_history):
 
 # Function to convert text to speech using pyttsx3
 def text_to_speech(text):
-    engine = pyttsx3.init()
-    engine.setProperty('voice', 'female')  # Set to female voice
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_output:
-        temp_audio_output_path = temp_audio_output.name
-    engine.save_to_file(text, temp_audio_output_path)
-    engine.runAndWait()
-    return temp_audio_output_path
+    try:
+        engine = pyttsx3.init()
+        voices = engine.getProperty('voices')
+        # Set to a female voice (choose an appropriate index based on the available voices)
+        engine.setProperty('voice', voices[1].id)  # You might need to adjust this index
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_output:
+            temp_audio_output_path = temp_audio_output.name
+        engine.save_to_file(text, temp_audio_output_path)
+        engine.runAndWait()
+        return temp_audio_output_path
+    except Exception as e:
+        st.error(f"Error initializing text-to-speech engine: {e}")
+        return None
+
+    
 
 # Initialize chat history
 if 'chat_history' not in st.session_state:
@@ -344,16 +352,16 @@ if 'chat_history' not in st.session_state:
 # Streamlit app interface
 st.title("AI Virtual Psychiatrist")
 
+# Audio recording section
+st.write("Record your query:")
+audio_bytes = audio_recorder()
+
 # Display chat history
 if st.session_state.chat_history:
     st.subheader("Chat History")
     for i, (query, response) in enumerate(st.session_state.chat_history):
         st.write(f"Q{i+1}: {query}")
         st.write(f"A{i+1}: {response}")
-
-# Audio recording section
-st.write("Record your query:")
-audio_bytes = audio_recorder()
 
 if audio_bytes:
     # Save the audio bytes to a temporary file
