@@ -193,6 +193,7 @@
 #         except sr.RequestError as e:
 #             st.write(f"Could not request results from Google Speech Recognition service; {e}")
 
+
 import os
 import google.generativeai as genai
 import sys
@@ -237,17 +238,25 @@ if 'chat_history' not in st.session_state:
 # Streamlit app interface
 st.title("AI Virtual Psychiatrist")
 
-# Display chat history
-if st.session_state.chat_history:
-    st.write("### Chat History")
-    for query, response in st.session_state.chat_history:
-        st.write(f"**You:** {query}")
-        st.write(f"**AI:** {response}")
-        st.write("---")
-
 # Audio recording section
 st.write("Record your query:")
 audio_bytes = audio_recorder()
+
+# # Display chat history
+# if st.session_state.chat_history:
+#     st.write("### Chat History")
+#     for query, response in st.session_state.chat_history:
+#         st.write(f"**You:** {query}")
+#         st.write(f"**AI:** {response}")
+#         st.write("---")
+
+# Chat history display
+if st.session_state.chat_history:
+    st.subheader("Chat History")
+    for i, (query, response) in enumerate(st.session_state.chat_history):
+        st.write(f"Q{i+1}: {query}")
+        st.write(f"A{i+1}: {response}")
+
 
 if audio_bytes:
     # Save the audio bytes to a temporary file
@@ -280,5 +289,6 @@ if audio_bytes:
             st.write("Sorry, I could not understand the audio.")
         except sr.RequestError as e:
             st.write(f"Could not request results from Google Speech Recognition service; {e}")
+
 
 
