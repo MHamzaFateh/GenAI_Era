@@ -290,110 +290,6 @@
 #         except sr.RequestError as e:
 #             st.write(f"Could not request results from Google Speech Recognition service; {e}")
 
-# import os
-# import google.generativeai as genai
-# import sys
-# from datasets import load_dataset
-# import streamlit as st
-# from audio_recorder_streamlit import audio_recorder
-# import speech_recognition as sr
-# from gtts import gTTS
-# import pyttsx3
-# import tempfile
-
-# # Configure the Gemini API key
-# api_key = os.getenv("GEMINI_API_KEY")
-# if api_key is None:
-#     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
-# genai.configure(api_key=api_key)
-
-# Load the dataset from Hugging Face
-# def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
-#     dataset = load_dataset(dataset_name)
-#     # Extracting context and response from the dataset
-#     documents = []
-#     for item in dataset['train']:
-#         context = item['Context']  # User's question
-#         response = item['Response']  # Psychologist's answer
-#         documents.append(f"User: {context}\nPsychologist: {response}")
-#     return documents
-
-# # Define conversational retrieval function
-# def conversational_retrieval(query, chat_history):
-#     documents = load_data()[:5]  # Load a small subset of the dataset
-#     combined_documents = "\n".join(documents)
-#     conversation_context = "\n".join([f"User: {q}\nAI: {a}" for q, a in chat_history])
-#     full_context = f"{conversation_context}\nDocuments: {combined_documents[:1000]}\nUser Query: {query}"
-#     model = genai.GenerativeModel('gemini-1.0-pro-latest')
-#     response = model.generate_content(full_context)
-#     return response.text
-
-# # Function to convert text to speech using pyttsx3
-# def text_to_speech(text, lang='en'):
-#     try:
-#         tts = gTTS(text=text, lang=lang)
-#         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_output:
-#             tts.save(temp_audio_output.name)
-#             return temp_audio_output.name
-#     except Exception as e:
-#         st.error(f"Error generating speech: {e}")
-#         return None
-
-    
-
-# # Initialize chat history
-# if 'chat_history' not in st.session_state:
-#     st.session_state.chat_history = []
-
-# # Streamlit app interface
-# st.title("AI Virtual Psychiatrist")
-
-# # Audio recording section
-# st.write("Record your query:")
-# audio_bytes = audio_recorder()
-
-# # Display chat history
-# if st.session_state.chat_history:
-#     st.subheader("Chat History")
-#     for i, (query, response) in enumerate(st.session_state.chat_history):
-#         st.write(f"Q{i+1}: {query}")
-#         st.write(f"A{i+1}: {response}")
-
-# if audio_bytes:
-#     # Save the audio bytes to a temporary file
-#     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_file:
-#         temp_audio_file.write(audio_bytes)
-#         audio_file_path = temp_audio_file.name
-    
-#     # Convert audio to text
-#     recognizer = sr.Recognizer()
-#     with sr.AudioFile(audio_file_path) as source:
-#         audio = recognizer.record(source)
-#         try:
-#             query = recognizer.recognize_google(audio)
-#             st.write(f"Your query: {query}")
-            
-#             # Get the AI's response based on the query and the conversation history
-#             result = conversational_retrieval(query, st.session_state.chat_history)
-#             st.write("AI:", result)
-
-#             # Add the current query and AI's response to the session history
-#             st.session_state.chat_history.append((query, result))
-            
-#             # Convert AI's response to speech using pyttsx3
-#             audio_file_path = text_to_speech(result)
-            
-#             # Play the generated audio
-#             st.audio(audio_file_path, format='audio/mp3')
-        
-#         except sr.UnknownValueError:
-#             st.write("Sorry, I could not understand the audio.")
-#         except sr.RequestError as e:
-#             st.write(f"Could not request results from Google Speech Recognition service; {e}")
-
-
-
-
 import os
 import google.generativeai as genai
 import sys
@@ -402,8 +298,8 @@ import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
 from gtts import gTTS
+import pyttsx3
 import tempfile
-from textblob import TextBlob
 
 # Configure the Gemini API key
 api_key = os.getenv("GEMINI_API_KEY")
@@ -411,7 +307,7 @@ if api_key is None:
     raise ValueError("API key not found. Set the GEMINI_API_KEY environment variable.")
 genai.configure(api_key=api_key)
 
-# Load the dataset from Hugging Face
+Load the dataset from Hugging Face
 def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
     dataset = load_dataset(dataset_name)
     # Extracting context and response from the dataset
@@ -424,15 +320,15 @@ def load_data(dataset_name="Amod/mental_health_counseling_conversations"):
 
 # Define conversational retrieval function
 def conversational_retrieval(query, chat_history):
-    documents = load_data()[:20]  # Load a small subset of the dataset
+    documents = load_data()[:5]  # Load a small subset of the dataset
     combined_documents = "\n".join(documents)
     conversation_context = "\n".join([f"User: {q}\nAI: {a}" for q, a in chat_history])
     full_context = f"{conversation_context}\nDocuments: {combined_documents[:12000]}\nUser Query: {query}"
-    model = genai.GenerativeModel('gemini-1.0-pro-latest')
+    model = genai.GenerativeModel('gemini-1.5-pro-latest')
     response = model.generate_content(full_context)
     return response.text
 
-# Function to convert text to speech using gTTS
+# Function to convert text to speech using pyttsx3
 def text_to_speech(text, lang='en'):
     try:
         tts = gTTS(text=text, lang=lang)
@@ -443,20 +339,7 @@ def text_to_speech(text, lang='en'):
         st.error(f"Error generating speech: {e}")
         return None
 
-# Function to analyze sentiment and adjust the response tone
-def analyze_sentiment(text):
-    analysis = TextBlob(text)
-    return analysis.sentiment.polarity
-
-def adjust_response_tone(response, sentiment_score):
-    if sentiment_score < 0:
-        # If the user's sentiment is negative, make the response more empathetic
-        return f"I'm sorry you're feeling this way. {response}"
-    elif sentiment_score > 0:
-        # If the user's sentiment is positive, encourage the user
-        return f"I'm glad to hear that! {response}"
-    else:
-        return response
+    
 
 # Initialize chat history
 if 'chat_history' not in st.session_state:
@@ -490,21 +373,14 @@ if audio_bytes:
             query = recognizer.recognize_google(audio)
             st.write(f"Your query: {query}")
             
-            # Analyze sentiment of the query
-            sentiment_score = analyze_sentiment(query)
-            
             # Get the AI's response based on the query and the conversation history
             result = conversational_retrieval(query, st.session_state.chat_history)
-            
-            # Adjust the response tone based on sentiment analysis
-            result = adjust_response_tone(result, sentiment_score)
-            
             st.write("AI:", result)
 
             # Add the current query and AI's response to the session history
             st.session_state.chat_history.append((query, result))
             
-            # Convert AI's response to speech using gTTS
+            # Convert AI's response to speech using pyttsx3
             audio_file_path = text_to_speech(result)
             
             # Play the generated audio
@@ -514,4 +390,3 @@ if audio_bytes:
             st.write("Sorry, I could not understand the audio.")
         except sr.RequestError as e:
             st.write(f"Could not request results from Google Speech Recognition service; {e}")
-
