@@ -5,3 +5,4 @@ audio-recorder-streamlit
 SpeechRecognition
 gtts
 pyttsx3
+textblob
