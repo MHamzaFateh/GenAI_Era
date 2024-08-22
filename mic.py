@@ -297,7 +297,7 @@ from datasets import load_dataset
 import streamlit as st
 from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
-from TTS.api import TTS
+import pyttsx3
 import tempfile
 
 # Configure the Gemini API key
@@ -327,18 +327,15 @@ def conversational_retrieval(query, chat_history):
     response = model.generate_content(full_context)
     return response.text
 
-# Function to convert text to speech using Mozilla TTS
+# Function to convert text to speech using pyttsx3
 def text_to_speech(text):
-    # Initialize the TTS engine
-    tts = TTS(model_name="tts_models/en/ljspeech/tacotron2-DDC", progress_bar=True, gpu=False)
-    
-    # Synthesize the speech
-    wav = tts.tts(text)
-    
-    # Save the audio to a temporary file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_output:
-        tts.save_wav(wav, temp_audio_output.name)
-        return temp_audio_output.name
+    engine = pyttsx3.init()
+    engine.setProperty('voice', 'female')  # Set to female voice
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_output:
+        temp_audio_output_path = temp_audio_output.name
+    engine.save_to_file(text, temp_audio_output_path)
+    engine.runAndWait()
+    return temp_audio_output_path
 
 # Initialize chat history
 if 'chat_history' not in st.session_state:
@@ -347,16 +344,16 @@ if 'chat_history' not in st.session_state:
 # Streamlit app interface
 st.title("AI Virtual Psychiatrist")
 
-
-# Audio recording section
-st.write("Record your query:")
-audio_bytes = audio_recorder()
-
+# Display chat history
 if st.session_state.chat_history:
     st.subheader("Chat History")
     for i, (query, response) in enumerate(st.session_state.chat_history):
         st.write(f"Q{i+1}: {query}")
         st.write(f"A{i+1}: {response}")
+
+# Audio recording section
+st.write("Record your query:")
+audio_bytes = audio_recorder()
 
 if audio_bytes:
     # Save the audio bytes to a temporary file
@@ -379,14 +376,13 @@ if audio_bytes:
             # Add the current query and AI's response to the session history
             st.session_state.chat_history.append((query, result))
             
-            # Convert AI's response to speech using Mozilla TTS
+            # Convert AI's response to speech using pyttsx3
             audio_file_path = text_to_speech(result)
             
             # Play the generated audio
-            st.audio(audio_file_path, format='audio/wav')
+            st.audio(audio_file_path, format='audio/mp3')
         
         except sr.UnknownValueError:
             st.write("Sorry, I could not understand the audio.")
         except sr.RequestError as e:
             st.write(f"Could not request results from Google Speech Recognition service; {e}")
-
